@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.AnimatedValues;
+using System.Linq;
 
 public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monobehavior
 {
@@ -16,20 +18,33 @@ public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monob
     Color mainSectionColor = new Color(80f / 255f, 82f / 255f, 81f / 255f);
 
     //Create instance of the scriptableobject 
-    static LanguageData languageData;
+    static LanguageGroup languageGroup;
+
+    //Array holding languages
+    LanguageType[] existinglanguagesArr;
+    static LanguageType test1Lang;
+
+    public static LanguageType Lang1Data { get { return test1Lang; } }
 
     //Methods to return
-    public static LanguageData LanguageInfo { get { return languageData;  } }
+    public static LanguageGroup LanguageInfo { get { return languageGroup;  } }
+
+
+    //Languages
+    int selectedInd = 0;
+    string[] languages;
+    static LanguageSelectorWindow window;
 
 
     //Menu Item will be under Window
     [MenuItem("Window/Language Selector")]
     static void OpenWindow()
     {
-        LanguageSelectorWindow window = (LanguageSelectorWindow)GetWindow(typeof(LanguageSelectorWindow));
+        window = (LanguageSelectorWindow)GetWindow(typeof(LanguageSelectorWindow));
         window.minSize = new Vector2(600, 100);
         window.Show();
     }
+
 
 
     //Similar to start function in reg code
@@ -37,14 +52,17 @@ public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monob
     {
         InitData();
         InitTextures();
-
+        LoadLanguages();
 
     }
 
     public static void InitData()
     {
         //Cast scriptable object created
-        languageData = (LanguageData)ScriptableObject.CreateInstance(typeof(LanguageData));
+        languageGroup = (LanguageGroup)ScriptableObject.CreateInstance(typeof(LanguageGroup));
+        test1Lang = (LanguageType)ScriptableObject.CreateInstance(typeof(LanguageType));
+        
+
     }
 
     public void InitTextures()
@@ -60,6 +78,44 @@ public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monob
 
         //mainSectionTexture = Resources.Load<Texture2D>("textures/t1");
     }
+
+    void LoadLanguages()
+    {
+        string languagesPath = "langDatabase";
+        Object[] objects = Resources.LoadAll(languagesPath,typeof(LanguageType)); //this already points to the resources folder so u don't need the full path
+        if (objects.Length != 0)
+        {
+            languages = new string[objects.Length];
+            int index1 = 0;
+
+            //Take each language name and put into array
+            foreach (LanguageType lang in objects)
+            {
+                languages[index1] = lang.langName;
+                index1++;
+            }
+            //Debug.Log(languages[0]);
+        }
+
+
+    }
+
+    void SaveNewLanguage()
+    {
+        string newName = test1Lang.langName;
+        if (!languages.Any(newName.Contains))
+        {
+            AssetDatabase.CreateAsset(LanguageSelectorWindow.Lang1Data, "Assets/resources/langDatabase/" + newName + ".asset");
+            window.Close(); //Closing window to reload properly
+        }
+        else
+        {
+            Debug.Log("Sorry couldn't add that, please close the window and then try to add the language again or check if you ALREADY created the language.");
+        }
+
+       
+    }
+
 
     //Similar to update function
     private void OnGUI()
@@ -99,22 +155,65 @@ public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monob
     void DrawMainArea()
     {
         GUILayout.BeginArea(mainSection);
+
+        //Creating Languages Section
+        GUILayout.Label("P1 - Creating Languages");
+        GUILayout.Label("Below you will see the current languages you can add matching text for each key.");
+        GUILayout.Label("If you do not see any languages -- create one below");
+        
+        
+        EditorGUILayout.BeginHorizontal();
+        if (languages.Length != 0)
+        {
+            EditorGUILayout.Popup("Current Languages", selectedInd, languages);
+            
+        }
+        EditorGUILayout.EndHorizontal();
+
+
+
+        GUILayout.Label("Here you can create a language");
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label("Language Name: ");
+        test1Lang.langName = EditorGUILayout.TextField(test1Lang.langName);
+
+
+        EditorGUILayout.EndHorizontal();
+        
+        if (GUILayout.Button("Create Language!", GUILayout.Height(40)))
+        {
+            //Save language name and update the box at the top
+            //((LanguageType)ScriptableObject.CreateInstance(typeof(LanguageType))).langName = EditorGUILayout.TextField(test1Lang.langName)
+            Debug.Log(test1Lang.langName);
+            SaveNewLanguage();
+        }
+        EditorGUILayout.TextArea("", GUI.skin.horizontalSlider);
+        GUILayout.Label("");
+        GUILayout.Label("P2 - Creating Language Groups!");
+
+        //Key section
         GUILayout.Label("Please enter a key");
 
         GUILayout.BeginHorizontal();
         GUILayout.Label("Key: ");
-        languageData.key = EditorGUILayout.TextField(languageData.key);
+        languageGroup.key = EditorGUILayout.TextField(languageGroup.key);
         GUILayout.EndHorizontal();
 
+        /*
         GUILayout.BeginHorizontal();
         GUILayout.Label("No Of Languages: ");
-        languageData.noOfLanguages = EditorGUILayout.Slider(languageData.noOfLanguages,1.0f,5.0f);
-        languageData.noOfLanguages = Mathf.Round(languageData.noOfLanguages);
-        GUILayout.EndHorizontal();
+        //languageGroup.noOfLanguages = EditorGUILayout.Slider(languageGroup.noOfLanguages,1.0f,5.0f);
+        //languageGroup.noOfLanguages = Mathf.Round(languageGroup.noOfLanguages);
+        GUILayout.EndHorizontal();*/
 
-        if(GUILayout.Button("Create Key!",GUILayout.Height(40)))
+
+        if(GUILayout.Button("Create Language Group!",GUILayout.Height(40)) && languageGroup.key.Length != 0)
         {
-            LanguageSettings.OpenWindow(languageData.key, languageData.noOfLanguages);
+            LanguageSettings.OpenWindow(languageGroup.key);
+        }
+        else
+        {
+            Debug.Log("Make sure you entered a key");
         }
 
 
@@ -124,39 +223,76 @@ public class LanguageSelectorWindow : EditorWindow //Type editorWindow not Monob
 
 }
 
+//NEW WINDOW
 
 public class LanguageSettings : EditorWindow
 {
     static string key;
-    static int ammount;
     static LanguageSettings window;
-    LanguageDetails[] detailsArr;
+    static LanguageGroup langGroup;
+    string[] languages;
 
-    public static void OpenWindow(string selectedkey,float number)
+    public static LanguageGroup GetLanguageGroup { get { return langGroup; } }
+
+    public static void OpenWindow(string selectedkey)
     {
         key = selectedkey;
-        ammount = (int) number;
         window = (LanguageSettings)GetWindow(typeof(LanguageSettings));
         window.minSize = new Vector2(800, 400);
         window.Show();
     }
 
 
+    void LoadLanguages()
+    {
+        string languagesPath = "langDatabase";
+        Object[] objects = Resources.LoadAll(languagesPath, typeof(LanguageType)); //this already points to the resources folder so u don't need the full path
+        if (objects.Length != 0)
+        {
+            languages = new string[objects.Length];
+            int index1 = 0;
+
+            LanguageSettings.GetLanguageGroup.langTextArr = new LanguageDetails[languages.Length];
+
+
+            //Take each language name and put into array
+            foreach (LanguageType lang in objects)
+            {
+                //Creating the objects inside the array
+                LanguageSettings.GetLanguageGroup.langTextArr[index1] = (LanguageDetails)ScriptableObject.CreateInstance(typeof(LanguageDetails));
+                languages[index1] = lang.langName;
+                //Setting a generic text
+                LanguageSettings.GetLanguageGroup.langTextArr[index1].langText = "none";
+                index1++;
+            }
+
+            
+        }
+
+
+    }
+
+    void SaveNewLanguageGroup()
+    {
+        
+      
+        AssetDatabase.CreateAsset(LanguageSettings.GetLanguageGroup, "Assets/resources/langGroupDatabase/" + key + ".asset");
+        window.Close(); //Closing window to reload properly
+        
+
+    }
+
+
     void InitData()
     {
-        detailsArr = new LanguageDetails[ammount];
-
-        for (int x = 0; x < ammount; x++)
-        {
-            detailsArr[x].langName = "null";
-            detailsArr[x].langText = "null";
-
-        }
+        langGroup = (LanguageGroup)ScriptableObject.CreateInstance(typeof(LanguageGroup));
+        langGroup.key = key;
     }
 
     public void OnEnable()
     {
         InitData();
+        LoadLanguages();
     }
 
     private void OnGUI()
@@ -166,55 +302,28 @@ public class LanguageSettings : EditorWindow
 
     void DrawSettings()
     {
-        //Array of language details based on the ammount requested
-        string langName1 = "";
-        string langText1 = "";
 
-        if (ammount > 0 )
+
+
+
+
+        GUILayout.Label("P3 - Building Language Group");
+        GUILayout.Label("Current Key: " + key);
+        GUILayout.Label("Here for each language that you created -- enter the corresponding text relating to the key");
+
+        for (int i = 0; i < languages.Length; i++)
         {
-            for (int x = 0; x < ammount; x++)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("L "+x.ToString());
-                detailsArr[x].langText = EditorGUILayout.TextField(langName1);
-                detailsArr[x].langText = EditorGUILayout.TextField(langText1);// GUILayout.MinWidth(80f)
-                GUILayout.EndHorizontal();
-            }
 
-            
-
-           
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(languages[i]);
+            LanguageSettings.GetLanguageGroup.langTextArr[i].langText = EditorGUILayout.TextField(LanguageSettings.GetLanguageGroup.langTextArr[i].langText);
+            GUILayout.EndHorizontal();
         }
 
-        
-
-       
-
-        /*
-        if (ammount > 0)
+        if (GUILayout.Button("Save Language Group!", GUILayout.Height(40)))
         {
-            
-
-            
-
-
-
-            
-            //For loop to generate enough textboxes for key
-            for (int x = 0; x < ammount; x++)
-            {
-                LanguageDetails currentLang = detailsArr[ammount];
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("L " + (ammount + 1));
-                currentLang.langName = EditorGUILayout.TextField(currentLang.langName);
-                currentLang.langText = EditorGUILayout.TextField(currentLang.langText);// GUILayout.MinWidth(80f)
-                GUILayout.EndHorizontal();
-            }
-        }*/
-
-        
-
+            SaveNewLanguageGroup();
+        }
 
 
     }
