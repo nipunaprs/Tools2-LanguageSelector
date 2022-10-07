@@ -8,7 +8,7 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
 
-    List<string> textFromMyInputs = new List<string>();
+
     Text[] texts;
     
     string[] keyNames;
