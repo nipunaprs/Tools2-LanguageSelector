@@ -253,7 +253,7 @@ public class LanguageSettings : EditorWindow
             int index1 = 0;
 
             LanguageSettings.GetLanguageGroup.langTextArr = new LanguageDetails[languages.Length];
-
+            //LanguageSettings.GetLanguageGroup.langDict = new Dictionary<string, string>();
 
             //Take each language name and put into array
             foreach (LanguageType lang in objects)
@@ -261,6 +261,7 @@ public class LanguageSettings : EditorWindow
                 //Creating the objects inside the array
                 LanguageSettings.GetLanguageGroup.langTextArr[index1] = (LanguageDetails)ScriptableObject.CreateInstance(typeof(LanguageDetails));
                 languages[index1] = lang.langName;
+                //LanguageSettings.GetLanguageGroup.langDict[lang.langName] = "none";
                 //Setting a generic text
                 LanguageSettings.GetLanguageGroup.langTextArr[index1].langText = "none";
                 index1++;
@@ -279,6 +280,21 @@ public class LanguageSettings : EditorWindow
         AssetDatabase.CreateAsset(LanguageSettings.GetLanguageGroup, "Assets/resources/langGroupDatabase/" + key + ".asset");
         window.Close(); //Closing window to reload properly
         
+
+    }
+
+    void SaveLangTexts()
+    {
+        int index1 = 0;
+        foreach(LanguageDetails langText in LanguageSettings.GetLanguageGroup.langTextArr)
+        {
+            AssetDatabase.CreateAsset(langText, "Assets/resources/langTextData/" + key + "-" + languages[index1] + ".asset");
+            index1++;
+        }
+
+        
+        window.Close(); //Closing window to reload properly
+
 
     }
 
@@ -316,12 +332,15 @@ public class LanguageSettings : EditorWindow
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(languages[i]);
+            LanguageSettings.GetLanguageGroup.langTextArr[i].langName = languages[i];
+            //LanguageSettings.GetLanguageGroup.langDict[languages[i]] = EditorGUILayout.TextField(LanguageSettings.GetLanguageGroup.langDict[languages[i]]);
             LanguageSettings.GetLanguageGroup.langTextArr[i].langText = EditorGUILayout.TextField(LanguageSettings.GetLanguageGroup.langTextArr[i].langText);
             GUILayout.EndHorizontal();
         }
 
         if (GUILayout.Button("Save Language Group!", GUILayout.Height(40)))
         {
+            SaveLangTexts();
             SaveNewLanguageGroup();
         }
 

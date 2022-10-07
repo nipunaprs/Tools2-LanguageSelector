@@ -7,5 +7,6 @@ public class LanguageGroup : ScriptableObject
     //Key that determines it
     public string key;
     public LanguageDetails[] langTextArr;
+    //public Dictionary<string, string> langDict; 
 
 }
