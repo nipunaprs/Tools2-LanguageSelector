@@ -102,12 +102,24 @@ public class GameManager : MonoBehaviour
             //If txtfields key is in the keys
             string nameofObject = gameText.name;
             //Debug.Log(keyNames[0]);
-            /*
+            
             if (keyNames.Any(nameofObject.Contains))
             {
-                gameText.text = groupDict[gameText.name].langTextArr[mainDropdown.value].langText;
-            }*/
+                
+                foreach (LanguageDetails langDetails in groupDict[nameofObject].langTextArr)
+                {
+                    Debug.Log(langDetails.langText);
 
+                    if (langDetails.langName == currentSelectedLang)
+                    {
+                        gameText.text = langDetails.langText;
+                    }
+                }
+                    //groupDict[nameofObject].langTextArr[mainDropdown.value].langName == currentSelectedLang
+
+                
+            }
+            
 
 
         }
